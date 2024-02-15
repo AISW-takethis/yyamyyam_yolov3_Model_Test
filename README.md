@@ -2,7 +2,13 @@
 <img src="https://user-images.githubusercontent.com/26833433/85940594-2d3f7d80-b8d2-11ea-809a-87b3bf6d968b.jpg" width="1000"></a>
 &nbsp
 
+- 이 Test File은 가중치 파일은 용량문제로 못올렸습니다.
+
+- yolov3.pt, yolov3-spp.pt, yolov3-spp-ultralytics.pt, weights.zip, best_403food_e200b150v2.pt, last_403food_e200b150v2.pt
+
+
 This repo contains Ultralytics inference and training code for YOLOv3 in PyTorch. The code works on Linux, MacOS and Windows. Credit to Joseph Redmon for YOLO  https://pjreddie.com/darknet/yolo/.
+
 
 
 ## Requirements
