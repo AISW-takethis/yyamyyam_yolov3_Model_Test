@@ -37,6 +37,7 @@ def detect(save_img=False):
     model.to(device).eval()
 
     # Fuse Conv2d + BatchNorm2d layers
+
     # model.fuse()
 
     # Export mode
@@ -120,7 +121,7 @@ def detect(save_img=False):
                     n = (det[:, -1] == c).sum()  # detections per class
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
 
-                # Write results
+                # Write results, Bounding Box값 추출 부분
                 for *xyxy, conf, cls in reversed(det):
                     if save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
