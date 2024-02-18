@@ -204,7 +204,7 @@ def detect(save_img=False):
                     if save_img or view_img:  # Add bbox to image
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)])
 
-                    for i in range(count):  ##리스트 두 개 xml파일에 저장
+                    for i in range(count):  #리스트 두 개 xml파일에 저장
                         object_xml = SubElement(root, 'object')
                         SubElement(object_xml, 'name').text = object_names[i]
                         bndbox = SubElement(object_xml, 'bndbox')
