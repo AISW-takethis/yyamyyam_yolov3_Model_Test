@@ -12,6 +12,7 @@ from sys import platform
 import cv2
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import numpy as np
 import torch
 import torch.nn as nn
@@ -824,17 +825,76 @@ def output_to_target(output, width, height):
 
 # Plotting functions ---------------------------------------------------------------------------------------------------
 def plot_one_box(x, img, color=None, label=None, line_thickness=None):
-    # Plots one bounding box on image img
-    tl = line_thickness or round(0.002 * (img.shape[0] + img.shape[1]) / 2) + 1  # line/font thickness
+    """
+    이미지에 하나의 바운딩 박스와 선택적으로 레이블을 그립니다. 이 함수는 바운딩 박스의 좌표도 출력합니다.
+    
+    파라미터:
+    - x: 바운딩 박스의 좌표 (x1, y1, x2, y2) 형식.
+    - img: 바운딩 박스와 레이블을 추가할 원본 이미지 (OpenCV 이미지 형식).
+    - color: 바운딩 박스의 색상 (RGB 형식). 지정되지 않으면 랜덤 색상을 사용.
+    - label: 바운딩 박스 위에 표시될 레이블 텍스트. 생략 가능.
+    - line_thickness: 바운딩 박스 선의 두께. 지정되지 않으면 이미지 크기에 기반하여 자동으로 결정됨.
+    """
+    
+    # 선 두께 자동 조정. 이미지의 크기에 따라 선 두께를 조정하되, 최소 두께는 1로 설정.
+    tl = line_thickness or round(0.002 * (img.shape[0] + img.shape[1]) / 2) + 1
+    
+    # 색상이 지정되지 않은 경우 랜덤 색상을 생성합니다.
     color = color or [random.randint(0, 255) for _ in range(3)]
-    c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
-    cv2.rectangle(img, c1, c2, color, thickness=tl, lineType=cv2.LINE_AA)
-    if label:
-        tf = max(tl - 1, 1)  # font thickness
-        t_size = cv2.getTextSize(label, 0, fontScale=tl / 3, thickness=tf)[0]
-        c2 = c1[0] + t_size[0], c1[1] - t_size[1] - 3
-        cv2.rectangle(img, c1, c2, color, -1, cv2.LINE_AA)  # filled
-        cv2.putText(img, label, (c1[0], c1[1] - 2), 0, tl / 3, [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
+    # PIL 라이브러리에서 사용 가능하도록 색상을 튜플로 변환합니다.
+    if isinstance(color, list):
+        color = tuple(color)
+    
+    # 바운딩 박스의 좌표를 계산합니다.
+    x0, y0, x1, y1 = map(int, x)
+    # 텍스트 색상을 흰색으로 설정합니다.
+    text_color = (255, 255, 255)
+    # 텍스트 위치를 바운딩 박스의 왼쪽 상단으로 설정합니다.
+    text_pos = (x0, y0)
+
+    # 한글 폰트를 사용하기 위해 폰트 파일을 로드합니다.
+    font_path = 'fonts/NanumGothic.ttf'
+    try:
+        font = ImageFont.truetype(font_path, int(tl * 10))
+        print("Font loaded successfully!")
+    except IOError:
+        print("Error, font file not found or could not be opened!")
+
+    # OpenCV 이미지를 PIL 이미지로 변환합니다.
+    img_pil = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    draw = ImageDraw.Draw(img_pil)
+
+    # 레이블의 텍스트 크기를 계산합니다.
+    text_size = draw.textsize(label, font=font)
+    # 텍스트 주변의 여백을 설정합니다.
+    text_padding = 4
+
+    # 텍스트 배경의 좌표를 계산하여 그립니다.
+    text_background_pos = [text_pos[0] - text_padding, text_pos[1] - text_padding,
+                            text_pos[0] + text_size[0] + text_padding, text_pos[1] + text_size[1] + text_padding]
+    draw.rectangle(text_background_pos, fill=color)
+
+    # 바운딩 박스를 그립니다.
+    draw.rectangle([x0, y0, x1, y1], outline=color, width=tl)
+    # 레이블 텍스트를 그립니다.
+    draw.text(text_pos, label, fill=text_color, font=font)
+
+    # 함수 실행 결과로 수정된 PIL 이미지를 반환합니다.
+    return img_pil
+
+
+# def plot_one_box(x, img, color=None, label=None, line_thickness=None):
+#    # Plots one bounding box on image img
+#    tl = line_thickness or round(0.002 * (img.shape[0] + img.shape[1]) / 2) + 1  # line/font thickness
+#    color = color or [random.randint(0, 255) for _ in range(3)]
+#    c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
+#    cv2.rectangle(img, c1, c2, color, thickness=tl, lineType=cv2.LINE_AA)
+#    if label:
+#        tf = max(tl - 1, 1)  # font thickness
+#        t_size = cv2.getTextSize(label, 0, fontScale=tl / 3, thickness=tf)[0]
+#        c2 = c1[0] + t_size[0], c1[1] - t_size[1] - 3
+#        cv2.rectangle(img, c1, c2, color, -1, cv2.LINE_AA)  # filled
+#        cv2.putText(img, label, (c1[0], c1[1] - 2), 0, tl / 3, [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
 
 
 

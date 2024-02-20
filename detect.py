@@ -102,49 +102,61 @@ def detect(save_img=False):
         if classify:
             pred = apply_classifier(pred, modelc, img, im0s)
 
-        # Process detections
-        for i, det in enumerate(pred):  # detections for image i
-            if webcam:  # batch_size >= 1
+        # Process detections, 결과 처리 부분: 각 이미지에 대해 탐지된 객체들을 처리합니다.
+        for i, det in enumerate(pred):  # 각 이미지 i에 대한 탐지된 객체들(det)을 반복
+            if webcam:  # batch_size >= 1, 웹캠 입력인 경우
                 p, s, im0 = path[i], '%g: ' % i, im0s[i].copy()
-            else:
+            else: # 이미지 파일 입력인 경우
                 p, s, im0 = path, '', im0s
 
-            save_path = str(Path(out) / Path(p).name)
-            s += '%gx%g ' % img.shape[2:]  # print string
-            gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  #  normalization gain whwh
-            if det is not None and len(det):
-                # Rescale boxes from imgsz to im0 size
+            save_path = str(Path(out) / Path(p).name) # 결과 이미지 저장 경로
+            s += '%gx%g ' % img.shape[2:]  # 이미지 크기 출력 문자열
+            gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # 이미지 크기에 따른 정규화 계수
+
+            if det is not None and len(det): # 탐지된 객체가 있을 경우
+                # 탐지된 바운딩 박스 크기를 원본 이미지 크기로 조정
                 det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
 
-                # Print results
+                # Print results, 결과 출력
                 for c in det[:, -1].unique():
-                    n = (det[:, -1] == c).sum()  # detections per class
-                    s += '%g %ss, ' % (n, names[int(c)])  # add to string
+                    n = (det[:, -1] == c).sum() # 클래스별 탐지된 객체 수
+                    s += '%g %ss, ' % (n, names[int(c)]) # 클래스명과 객체 수를 문자열에 추가
 
-                # Write results, Bounding Box값 추출 부분
+                # Write results, 바운딩 박스 및 레이블 추가
                 for *xyxy, conf, cls in reversed(det):
-                    if save_txt:  # Write to file
+                    if save_txt:  # Write to file, 텍스트 파일에 저장할지 여부를 확인합니다.
+                        # 바운딩 박스 좌표를 정규화된 형태로 변환합니다.
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
+                        # 텍스트 파일에 레이블 포맷에 맞게 기록합니다.
                         with open(save_path[:save_path.rfind('.')] + '.txt', 'a') as file:
-                            file.write(('%g ' * 5 + '\n') % (cls, *xywh))  # label format
+                            file.write(('%g ' * 5 + '\n') % (cls, *xywh))  # label format, 레이블 포맷
 
                     if save_img or view_img:  # Add bbox to image
-                        label = '%s %.2f' % (names[int(cls)], conf)
-                        plot_one_box(xyxy, im0, label=label, color=colors[int(cls)])
+                        img_pil = None  # PIL 이미지 초기화
+                        for det in pred:
+                            label = '%s, 정확도: %.2f' % (names[int(cls)], conf) # 레이블 및 신뢰도
+                            print(f"Before plot_one_box: {img_pil}")
+                            img_pil = plot_one_box(xyxy, im0, label=label, color=colors[int(cls)]) # 바운딩 박스 및 레이블 추가
+                            print(f"After plot_one_box: {img_pil}")
+    
+                        # 모든 검출을 처리한 후 최종 이미지(img_pil) 저장
+                        if img_pil is not None and save_img:
+                            img_pil.save(save_path, 'JPEG') # 결과 이미지 저장
 
-            # Print time (inference + NMS)
+            # 처리 시간 출력 (추론 + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
 
             # Stream results
             if view_img:
                 cv2.imshow(p, im0)
-                if cv2.waitKey(1) == ord('q'):  # q to quit
+                if cv2.waitKey(1) == ord('q'):  # q to quit, 'q' 키를 누르면 종료
                     raise StopIteration
 
             # Save results (image with detections)
             if save_img:
                 if dataset.mode == 'images':
-                    cv2.imwrite(save_path, im0)
+                    img_pil.save(save_path, 'JPEG') # 결과 이미지 저장
+                    # cv2.imwrite(save_path, im0)
                 else:
                     if vid_path != save_path:  # new video
                         vid_path = save_path
@@ -172,7 +184,7 @@ if __name__ == '__main__':
     parser.add_argument('--weights', type=str, default='weights/best_403food_e200b150v2.pt', help='weights path')
     parser.add_argument('--source', type=str, default='data/samples', help='source')  # input file/folder, 0 for webcam
     parser.add_argument('--output', type=str, default='output', help='output folder')  # output folder
-    parser.add_argument('--img-size', type=int, default=512, help='inference size (pixels)')
+    parser.add_argument('--img-size', type=int, default=256, help='inference size (pixels)') # 해상도 이슈 수정 (접시)
     parser.add_argument('--conf-thres', type=float, default=0.5, help='object confidence threshold')
     parser.add_argument('--iou-thres', type=float, default=0.6, help='IOU threshold for NMS')
     parser.add_argument('--fourcc', type=str, default='mp4v', help='output video codec (verify ffmpeg support)')
