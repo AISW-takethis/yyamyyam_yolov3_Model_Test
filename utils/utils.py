@@ -865,13 +865,16 @@ def plot_one_box(x, img, color=None, label=None, line_thickness=None):
     draw = ImageDraw.Draw(img_pil)
 
     # 레이블의 텍스트 크기를 계산합니다.
-    text_size = draw.textsize(label, font=font)
+    text_length = draw.textlength(label, font=font)
     # 텍스트 주변의 여백을 설정합니다.
     text_padding = 4
 
+    # 텍스트 배경의 높이를 계산합니다.
+    text_height = tl * 10
+
     # 텍스트 배경의 좌표를 계산하여 그립니다.
     text_background_pos = [text_pos[0] - text_padding, text_pos[1] - text_padding,
-                            text_pos[0] + text_size[0] + text_padding, text_pos[1] + text_size[1] + text_padding]
+                            text_pos[0] + text_length + text_padding, text_pos[1] + text_height + text_padding]
     draw.rectangle(text_background_pos, fill=color)
 
     # 바운딩 박스를 그립니다.
